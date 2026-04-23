@@ -29,7 +29,7 @@ int main() {
         std::cout << "Please enter your age: " << std::endl;
         if (!(std::cin >> user_age) || user_age > validation::MAXIMUM_AGE) {
             std::cout << "You did not enter a valid number. Please try again. " << std::endl;
-            std::cin.clear();
+            std::cin.clear(); // Delete the error status
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         } else {
             break;
