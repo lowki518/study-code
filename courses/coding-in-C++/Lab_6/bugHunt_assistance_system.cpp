@@ -1,15 +1,19 @@
 #include "bugHunt_assistance_system.hpp"
 
+#include <iostream>
+// NO FUCKING COMMENTS
+
+
 DistanceSensor::DistanceSensor(const std::string &sensor_position,
                                double initial_distance_m)
-    : position(sensor_position),
+    : position(sensor_position), // Maybe sensor position in an enum or so... But small issue
       active(true),
       measured_distance_m(initial_distance_m)
-{
+{// No value checking for measured_distance_m
 }
 
 void DistanceSensor::set_distance(double distance_m)
-{
+{// No value checking for measured_distance_m
     measured_distance_m = distance_m;
 }
 
@@ -23,7 +27,7 @@ void DistanceSensor::deactivate()
     active = false;
 }
 
-double DistanceSensor::get_distance() const
+double DistanceSensor::get_distance() const 
 {
     return measured_distance_m;
 }
@@ -40,12 +44,12 @@ std::string DistanceSensor::get_position() const
 
 bool DistanceSensor::operator<(const DistanceSensor &other) const
 {
-    return measured_distance_m > other.measured_distance_m;
+    return measured_distance_m < other.get_distance();
 }
 
-bool DistanceSensor::is_exactly_at_warning_distance(double warning_distance) const
-{
-    return measured_distance_m == warning_distance;
+bool DistanceSensor::is_in_warning_distance(double warning_distance) const
+{ 
+    return measured_distance_m <= warning_distance;
 }
 
 void DistanceSensor::print_info() const
@@ -55,8 +59,11 @@ void DistanceSensor::print_info() const
     std::cout << "Active: " << std::boolalpha << active << "\n\n";
 }
 
-EmergencyBrakeSystem::EmergencyBrakeSystem(double critical_distance)
-    : critical_distance_m(critical_distance)
+EmergencyBrakeSystem::EmergencyBrakeSystem(double critical_distance,
+                                            std::shared_ptr<DistanceSensor> front_sensor
+                                            )
+    : critical_distance_m(critical_distance),
+      front_sensor_m(front_sensor)
 {
 }
 
@@ -68,7 +75,7 @@ void EmergencyBrakeSystem::evaluate(Vehicle &vehicle,
         return;
     }
 
-    if (front_sensor.get_distance() > critical_distance_m)
+    if (front_sensor.get_distance() < critical_distance_m)
     {
         std::cout << "[EmergencyBrakeSystem] Emergency braking triggered.\n";
         vehicle.brake(30.0);
@@ -76,9 +83,11 @@ void EmergencyBrakeSystem::evaluate(Vehicle &vehicle,
 }
 
 LaneKeepingAssist::LaneKeepingAssist(double max_offset,
-                                     double correction)
+                                     double correction,
+                                     std::shared_ptr<DistanceSensor> front_sensor)
     : max_allowed_offset_m(max_offset),
-      correction_angle(correction)
+      correction_angle(correction),
+      front_sensor_m(front_sensor)
 {
 }
 
@@ -103,9 +112,11 @@ void LaneKeepingAssist::evaluate(Vehicle &vehicle) const
 }
 
 AdaptiveCruiseControl::AdaptiveCruiseControl(double target_speed,
-                                             double minimum_distance)
+                                             double minimum_distance,
+                                             std::shared_ptr<DistanceSensor> front_sensor)
     : target_speed_kmh(target_speed),
-      minimum_distance_m(minimum_distance)
+      minimum_distance_m(minimum_distance),
+      front_sensor_m(front_sensor)
 {
 }
 
@@ -114,6 +125,7 @@ void AdaptiveCruiseControl::evaluate(Vehicle &vehicle,
 {
     if (!front_sensor.is_active())
     {
+        std::cout << "Front sensor is inactive!\n";
         return;
     }
 
@@ -139,14 +151,14 @@ ParkingAssistant::ParkingAssistant(double warning_distance)
 {
 }
 
-void ParkingAssistant::add_sensor(DistanceSensor *sensor)
+void ParkingAssistant::add_sensor(std::shared_ptr<DistanceSensor> sensor) // smart pointers
 {
     sensors.push_back(sensor);
 }
 
 void ParkingAssistant::print_warnings() const
 {
-    for (DistanceSensor *sensor : sensors)
+    for (std::shared_ptr<DistanceSensor> sensor : sensors) // STL iteration for each
     {
         if (sensor != nullptr &&
             sensor->is_active() &&

@@ -1,5 +1,8 @@
 #include "bugHunt_vehicle.hpp"
 
+#include <iostream> 
+// Absolutely no comments grrr -> Documentation!!!
+
 Vehicle::Vehicle(const std::string &vehicle_model)
     : model(vehicle_model),
       speed_kmh(0.0),
@@ -11,47 +14,46 @@ Vehicle::Vehicle(const std::string &vehicle_model)
 
 void Vehicle::accelerate(double amount_kmh)
 {
-    try
+    if (amount_kmh >= 0.0) 
     {
-        if (amount_kmh <= 0.0)
-        {
-            throw std::invalid_argument("Acceleration must be positive.");
-        }
+        speed_kmh += amount_kmh;
     }
-    catch (const std::invalid_argument &e)
+    else 
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return;
+        std::cout << "No accelaration done!";
     }
-
-    speed_kmh += amount_kmh;
 
     brake_light_on = false;
 }
 
 void Vehicle::brake(double amount_kmh)
 {
-    if (amount_kmh <= 0.0)
+    if (amount_kmh > 0.0)
     {
-        return;
+        speed_kmh -= amount_kmh;
+        brake_light_on = true;
+    }
+    else 
+    {
+        std::cout << "Did not brake a negative amount!\n";
     }
 
-    speed_kmh -= amount_kmh;
-    brake_light_on = true;
 
     if (speed_kmh < 0.0)
     {
-        speed_kmh = amount_kmh;
+        speed_kmh = 0.0;
     }
 }
 
 void Vehicle::steer(double angle)
 {
-    steering_angle = angle;
+    // Range check -> [-180; 180] e.g.
+    steering_angle += angle;
 }
 
 void Vehicle::update_lane_offset(double offset)
 {
+    // Range check, also what does offset mean here?
     lane_offset_m = offset;
 }
 
@@ -70,7 +72,7 @@ double Vehicle::get_lane_offset() const
     return lane_offset_m;
 }
 
-std::string &Vehicle::get_model()
+std::string Vehicle::get_model() const
 {
     return model;
 }

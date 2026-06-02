@@ -12,14 +12,23 @@ int main()
     DistanceSensor left_sensor("left", 0.8);
     DistanceSensor right_sensor("right", 3.0);
 
-    EmergencyBrakeSystem emergency_brake(10.0);
-    LaneKeepingAssist lane_assist(0.4, 5.0);
-    AdaptiveCruiseControl cruise_control(80.0, 15.0);
+    auto p_front_sensor = std::make_shared<DistanceSensor>(front_sensor);
+    auto p_rear_sensor = std::make_shared<DistanceSensor>(rear_sensor);
+    auto p_left_sensor = std::make_shared<DistanceSensor>(left_sensor);
+    auto p_right_sensor = std::make_shared<DistanceSensor>(right_sensor);
+
+    EmergencyBrakeSystem emergency_brake(10.0, p_front_sensor);
+    LaneKeepingAssist lane_assist(0.4, 5.0, p_front_sensor);
+    AdaptiveCruiseControl cruise_control(80.0, 15.0, p_front_sensor);
     ParkingAssistant parking_assistant(1.5);
 
-    parking_assistant.add_sensor(&rear_sensor);
-    parking_assistant.add_sensor(&left_sensor);
-    parking_assistant.add_sensor(&right_sensor);
+    // Check how often front sensor is used
+    std::cout << "Front sensor is used " << p_front_sensor.use_count() << " times.\n";
+
+    
+    parking_assistant.add_sensor(p_rear_sensor);
+    parking_assistant.add_sensor(p_left_sensor);
+    parking_assistant.add_sensor(p_right_sensor);
 
     std::cout << "--- Initial vehicle status ---\n";
     ego_vehicle.print_status();
